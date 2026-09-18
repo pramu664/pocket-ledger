@@ -1,1 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pocket Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDEAE1;
+    --paper-raised: #F5F3EC;
+    --ink: #1F2E2C;
+    --ink-soft: #5A6660;
+    --line: #C9C2B2;
+    --line-strong: #A79F8C;
+    --brass: #A9814A;
+    --brass-soft: #E7D8B8;
+    --teal: #2F5D5A;
+    --moss: #3F6B4F;
+    --moss-bg: #DEE9DE;
+    --rust: #8C4A3A;
+    --rust-bg: #EFDCD3;
+    --shadow: rgba(31, 46, 44, 0.12);
+    --radius: 3px;
+  }
+
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --paper: #171D1B;
+      --paper-raised: #1E2523;
+      --ink: #E7E3D8;
+      --ink-soft: #9CA69F;
+      --line: #33403C;
+      --line-strong: #445048;
+      --brass: #C9A467;
+      --brass-soft: #3A3222;
+      --teal: #5FA39D;
+      --moss: #6FAE7F;
+      --moss-bg: #23342A;
+      --rust: #C97B63;
+      --rust-bg: #392621;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #171D1B;
+    --paper-raised: #1E2523;
+    --ink: #E7E3D8;
+    --ink-soft: #9CA69F;
+    --line: #33403C;
+    --line-strong: #445048;
+    --brass: #C9A467;
+    --brass-soft: #3A3222;
+    --teal: #5FA39D;
+    --moss: #6FAE7F;
+    --moss-bg: #23342A;
+    --rust: #C97B63;
+    --rust-bg: #392621;
+    --shadow: rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    padding: 28px 16px 60px;
+  }
+
+  .page {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin: 0 0 4px;
+  }
+
+  header p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    font-style: italic;
+  }
+
+  .stamp {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 1px 0 var(--shadow);
+    margin-bottom: 20px;
+  }
+
+  .stamp-label {
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+  }
+
+  .stamp-amount {
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--brass);
+    line-height: 1.1;
+    margin-top: 4px;
+  }
+
+  .stamp-sub {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .stamp-sub span.in { color: var(--moss); }
+  .stamp-sub span.out { color: var(--rust); }
+
+  form.entry-form {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 9px 0;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: "Source Serif 4", serif;
+    font-size: 0.9rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .toggle-btn[aria-pressed="true"].add {
+    background: var(--moss-bg);
+    color: var(--moss);
+    border-color: var(--moss);
+  }
+
+  .toggle-btn[aria-pressed="true"].spend {
+    background: var(--rust-bg);
+    color: var(--rust);
+    border-color: var(--rust);
+  }
+
+  .field-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-family: "Source Serif 4", serif;
+  }
+
+  input.mono-input {
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  input:focus, select:focus, button:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+  }
+
+  .amount-field { flex: 0 0 40%; }
+  .note-field { flex: 1; }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 4px;
+    padding: 11px 0;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--teal);
+    color: var(--paper);
+    font-family: "Source Serif 4", serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .submit-btn:hover { opacity: 0.9; }
+
+  section.block {
+    margin-bottom: 26px;
+  }
+
+  .block-title {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .entries {
+    border-top: 1px solid var(--line);
+  }
+
+  .entry-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .entry-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .entry-note {
+    font-size: 0.94rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .entry-meta {
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin-top: 2px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .goal-chip {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: var(--brass-soft);
+    color: var(--brass);
+    font-size: 0.68rem;
+  }
+
+  .entry-amount {
+    font-size: 0.98rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .entry-amount.in { color: var(--moss); }
+  .entry-amount.out { color: var(--rust); }
+
+  .entry-balance {
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    min-width: 62px;
+    text-align: right;
+  }
+
+  .empty-note {
+    padding: 18px 2px;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    font-style: italic;
+    text-align: center;
+  }
+
+  .perforation {
+    border: none;
+    border-top: 2px dashed var(--line-strong);
+    margin: 26px 0;
+  }
+
+  .goal-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px 14px;
+    margin-bottom: 10px;
+  }
+
+  .goal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .goal-name {
+    font-size: 0.96rem;
+    font-weight: 500;
+  }
+
+  .goal-figures {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .goal-figures .saved { color: var(--brass); font-weight: 600; }
+
+  .goal-bar-track {
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .goal-bar-fill {
+    height: 100%;
+    background: var(--brass);
+    transition: width 0.3s ease;
+  }
+
+  .goal-target-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .goal-target-row input {
+    width: 90px;
+    padding: 5px 7px;
+    font-size: 0.82rem;
+  }
+
+  .goal-target-row button {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: var(--radius);
+    padding: 5px 9px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: "Source Serif 4", serif;
+  }
+
+  .goal-target-row button:hover { border-color: var(--teal); color: var(--teal); }
+
+  .add-goal-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .add-goal-row input { flex: 1; }
+
+  .add-goal-row button {
+    flex: 0 0 auto;
+    padding: 9px 14px;
+    border: 1px dashed var(--line-strong);
+    background: transparent;
+    color: var(--ink-soft);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: "Source Serif 4", serif;
+    font-size: 0.85rem;
+  }
+
+  .add-goal-row button:hover { border-color: var(--teal); color: var(--teal); }
+
+  .goal-remove {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 0.7rem;
+    text-decoration: underline;
+    padding: 0;
+    font-family: "Source Serif 4", serif;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    margin-top: 30px;
+  }
+
+  @media (max-width: 380px) {
+    .stamp-amount { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Pocket Ledger</h1>
+    <p>your day-to-day cash, kept like a passbook</p>
+  </header>
+
+  <div class="stamp">
+    <div class="stamp-label">CURRENT BALANCE</div>
+    <div class="stamp-amount mono" id="balanceDisplay">Rs 0</div>
+    <div class="stamp-sub">
+      <span class="in">in <span class="mono" id="totalIn">0</span></span>
+      <span class="out">out <span class="mono" id="totalOut">0</span></span>
+    </div>
+  </div>
+
+  <form class="entry-form" id="entryForm">
+    <div class="toggle-row">
+      <button type="button" class="toggle-btn add" id="btnAdd" aria-pressed="true">Add money</button>
+      <button type="button" class="toggle-btn spend" id="btnSpend" aria-pressed="false">Spend</button>
+    </div>
+    <div class="field-row">
+      <div class="amount-field">
+        <input type="number" inputmode="decimal" step="0.01" min="0" class="mono-input" id="amountInput" placeholder="Rs" required>
+      </div>
+      <div class="note-field">
+        <input type="text" id="noteInput" placeholder="what for?" required>
+      </div>
+    </div>
+    <div class="field-row" id="goalRow">
+      <select id="goalSelect">
+        <option value="">no goal</option>
+      </select>
+    </div>
+    <button type="submit" class="submit-btn" id="submitBtn">Add to balance</button>
+  </form>
+
+  <section class="block">
+    <div class="block-title"><span>Entries</span><span id="entryCount"></span></div>
+    <div class="entries" id="entriesList"></div>
+  </section>
+
+  <hr class="perforation">
+
+  <section class="block">
+    <div class="block-title"><span>Savings goals</span></div>
+    <div id="goalsList"></div>
+    <div class="add-goal-row">
+      <input type="text" id="newGoalName" placeholder="add a goal (e.g. phone display)">
+      <button type="button" id="addGoalBtn">Add</button>
+    </div>
+  </section>
+
+  <footer>Stored privately in this browser only.</footer>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'pocketLedgerState_v1';
+  const DEFAULT_GOALS = [
+    { id: 'g_phone', name: 'Phone display', target: 0 },
+    { id: 'g_glasses', name: "Girlfriend's glasses", target: 0 },
+    { id: 'g_bike', name: 'Motorbike parts', target: 0 },
+    { id: 'g_clothes', name: 'New clothes', target: 0 },
+    { id: 'g_perfume', name: 'Perfume', target: 0 }
+  ];
+
+  let state = { entries: [], goals: DEFAULT_GOALS.slice() };
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.entries) && Array.isArray(parsed.goals)) {
+          state = parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Could not load ledger state', e);
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error('Could not save ledger state', e);
+    }
+  }
+
+  function fmt(n) {
+    const num = Math.round(Number(n) * 100) / 100;
+    return num.toLocaleString('en-LK', { minimumFractionDigits: num % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+  }
+
+  function currentBalance() {
+    return state.entries.reduce((sum, e) => sum + (e.type === 'add' ? e.amount : -e.amount), 0);
+  }
+
+  function totals() {
+    let inSum = 0, outSum = 0;
+    state.entries.forEach(e => {
+      if (e.type === 'add') inSum += e.amount; else outSum += e.amount;
+    });
+    return { inSum, outSum };
+  }
+
+  function savedForGoal(goalId) {
+    return state.entries
+      .filter(e => e.goalId === goalId && e.type === 'spend')
+      .reduce((sum, e) => sum + e.amount, 0);
+  }
+
+  let mode = 'add';
+
+  const balanceDisplay = document.getElementById('balanceDisplay');
+  const totalInEl = document.getElementById('totalIn');
+  const totalOutEl = document.getElementById('totalOut');
+  const entriesList = document.getElementById('entriesList');
+  const entryCount = document.getElementById('entryCount');
+  const goalsList = document.getElementById('goalsList');
+  const goalSelect = document.getElementById('goalSelect');
+  const btnAdd = document.getElementById('btnAdd');
+  const btnSpend = document.getElementById('btnSpend');
+  const submitBtn = document.getElementById('submitBtn');
+  const entryForm = document.getElementById('entryForm');
+  const amountInput = document.getElementById('amountInput');
+  const noteInput = document.getElementById('noteInput');
+
+  function setMode(newMode) {
+    mode = newMode;
+    btnAdd.setAttribute('aria-pressed', mode === 'add' ? 'true' : 'false');
+    btnSpend.setAttribute('aria-pressed', mode === 'spend' ? 'true' : 'false');
+    submitBtn.textContent = mode === 'add' ? 'Add to balance' : 'Log spending';
+    submitBtn.style.background = mode === 'add' ? 'var(--moss)' : 'var(--rust)';
+    document.getElementById('goalRow').style.display = mode === 'spend' ? 'flex' : 'none';
+  }
+
+  btnAdd.addEventListener('click', () => setMode('add'));
+  btnSpend.addEventListener('click', () => setMode('spend'));
+
+  function renderGoalOptions() {
+    goalSelect.innerHTML = '<option value="">no goal</option>' +
+      state.goals.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function render() {
+    const bal = currentBalance();
+    balanceDisplay.textContent = 'Rs ' + fmt(bal);
+    const t = totals();
+    totalInEl.textContent = fmt(t.inSum);
+    totalOutEl.textContent = fmt(t.outSum);
+
+    entryCount.textContent = state.entries.length ? state.entries.length + ' entries' : '';
+
+    if (state.entries.length === 0) {
+      entriesList.innerHTML = '<div class="empty-note">No entries yet. Log your first amount above.</div>';
+    } else {
+      let running = 0;
+      const withBalances = state.entries.map(e => {
+        running += (e.type === 'add' ? e.amount : -e.amount);
+        return { ...e, runningBalance: running };
+      });
+      entriesList.innerHTML = withBalances.slice().reverse().map(e => {
+        const goal = state.goals.find(g => g.id === e.goalId);
+        const dateStr = new Date(e.ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        return `
+          <div class="entry-row">
+            <div class="entry-main">
+              <div class="entry-note">${escapeHtml(e.note)}</div>
+              <div class="entry-meta">
+                <span>${dateStr}</span>
+                ${goal ? `<span class="goal-chip">${escapeHtml(goal.name)}</span>` : ''}
+              </div>
+            </div>
+            <div class="entry-amount mono ${e.type === 'add' ? 'in' : 'out'}">${e.type === 'add' ? '+' : '−'}${fmt(e.amount)}</div>
+            <div class="entry-balance mono">${fmt(e.runningBalance)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    renderGoalOptions();
+
+    if (state.goals.length === 0) {
+      goalsList.innerHTML = '<div class="empty-note">No goals yet. Add one below.</div>';
+    } else {
+      goalsList.innerHTML = state.goals.map(g => {
+        const saved = savedForGoal(g.id);
+        const target = Number(g.target) || 0;
+        const pct = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
+        const remaining = Math.max(0, target - saved);
+        return `
+          <div class="goal-card">
+            <div class="goal-top">
+              <span class="goal-name">${escapeHtml(g.name)}</span>
+              <button class="goal-remove" data-remove-goal="${g.id}">remove</button>
+            </div>
+            <div class="goal-figures">
+              <span class="saved mono">Rs ${fmt(saved)}</span> saved
+              ${target > 0 ? ` of <span class="mono">Rs ${fmt(target)}</span> · <span class="mono">Rs ${fmt(remaining)}</span> to go` : ' · set a target below'}
+            </div>
+            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
+            <div class="goal-target-row">
+              <span>target</span>
+              <input type="number" class="mono-input" min="0" step="1" placeholder="Rs" value="${target || ''}" data-target-input="${g.id}">
+              <button type="button" data-save-target="${g.id}">Set</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      goalsList.querySelectorAll('[data-save-target]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-save-target');
+          const input = goalsList.querySelector(`[data-target-input="${id}"]`);
+          const val = Number(input.value) || 0;
+          const g = state.goals.find(g => g.id === id);
+          if (g) { g.target = val; saveState(); render(); }
+        });
+      });
+
+      goalsList.querySelectorAll('[data-remove-goal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-remove-goal');
+          state.goals = state.goals.filter(g => g.id !== id);
+          saveState();
+          render();
+        });
+      });
+    }
+  }
+
+  entryForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const amount = Number(amountInput.value);
+    const note = noteInput.value.trim();
+    if (!amount || amount <= 0 || !note) return;
+    const goalId = mode === 'spend' ? (goalSelect.value || null) : null;
+    state.entries.push({
+      id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      type: mode,
+      amount: amount,
+      note: note,
+      goalId: goalId,
+      ts: Date.now()
+    });
+    saveState();
+    amountInput.value = '';
+    noteInput.value = '';
+    render();
+    amountInput.focus();
+  });
+
+  document.getElementById('addGoalBtn').addEventListener('click', () => {
+    const input = document.getElementById('newGoalName');
+    const name = input.value.trim();
+    if (!name) return;
+    state.goals.push({ id: 'g_' + Date.now(), name: name, target: 0 });
+    input.value = '';
+    saveState();
+    render();
+  });
+
+  loadState();
+  setMode('add');
+  render();
+})();
+</script>
+</body>
+</html>
 
